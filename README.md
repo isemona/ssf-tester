@@ -20,10 +20,15 @@ On first run it generates an RSA keypair at `app/keys/transmitter_rsa.pem`
 
 ## Running in Codespaces
 
-Open this repo in a Codespace (devcontainer installs deps automatically),
-run `uvicorn app.main:app --host 0.0.0.0 --reload`, make port 8000 public,
-and set `BASE_URL` in `.env` to the forwarded HTTPS URL. Restart so the
-transmitter's `iss`/`jwks_uri` reflect the public URL.
+This isn't a single-command start — `BASE_URL` isn't known until after the
+port is public, so the first boot needs a restart once you have it:
+
+1. Open this repo in a Codespace (devcontainer installs deps automatically).
+2. `cp env.sample .env`
+3. `uvicorn app.main:app --host 0.0.0.0 --reload`
+4. In the Ports tab, make port 8000 public and copy the forwarded HTTPS URL.
+5. Set `BASE_URL` in `.env` to that URL, then restart uvicorn so the
+   transmitter's `iss`/`jwks_uri` reflect the public URL.
 
 ## Registering with Okta
 
@@ -45,8 +50,13 @@ transmitter's `iss`/`jwks_uri` reflect the public URL.
 
 ## Notes
 
-- Receiver verification fetches the JWKS from `{iss}/.well-known/jwks.json`
-  on the incoming SET — confirm that matches Okta's actual JWKS location for
-  your org before relying on it.
+- Receiver verification discovers the issuer's JWKS via
+  `{iss}/.well-known/ssf-configuration` (falling back to
+  `{iss}/.well-known/jwks.json` if discovery fails) — confirm Okta exposes
+  that config at your org's issuer URL before relying on it.
 - `TRANSMITTER_AUDIENCE` / `RECEIVER_AUDIENCE` should match whatever
   audience value Okta expects/sends for your org's SSF registration.
+- No auth gate on `/transmitter/send`, `/receiver/events`, or `/events` yet
+  — fine for sandbox testing with a public Codespaces port, but add one
+  (e.g. a shared-secret header) before pointing this at anything beyond a
+  sandbox.
