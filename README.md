@@ -20,15 +20,22 @@ On first run it generates an RSA keypair at `app/keys/transmitter_rsa.pem`
 
 ## Running in Codespaces
 
-This isn't a single-command start — `BASE_URL` isn't known until after the
-port is public, so the first boot needs a restart once you have it:
+Config comes from the Codespaces environment directly — no `.env` file
+needed there:
 
-1. Open this repo in a Codespace (devcontainer installs deps automatically).
-2. `cp env.sample .env`
+1. Open this repo in a Codespace (devcontainer installs deps and forwards
+   port 8000 as public automatically).
+2. Set `OKTA_ORG_URL` (and `TRANSMITTER_AUDIENCE`/`RECEIVER_AUDIENCE` if
+   needed) as [Codespaces secrets](https://github.com/settings/codespaces)
+   or repo/org Codespaces secrets — they land as real env vars in the
+   container.
 3. `uvicorn app.main:app --host 0.0.0.0 --reload`
-4. In the Ports tab, make port 8000 public and copy the forwarded HTTPS URL.
-5. Set `BASE_URL` in `.env` to that URL, then restart uvicorn so the
-   transmitter's `iss`/`jwks_uri` reflect the public URL.
+
+`BASE_URL` is derived automatically from Codespaces' own `CODESPACE_NAME`
+and `GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN` env vars, so the transmitter's
+`iss`/`jwks_uri` are correct from the first boot — no restart-after-copying-
+the-URL step. Set `BASE_URL` explicitly (env var or `.env`) only if you need
+to override that.
 
 ## Registering with Okta
 
